@@ -283,6 +283,14 @@
 (jsx_fragment [">" "<" "/"] @tag.delimiter)
 (jsx_attribute (property_identifier) @tag.attribute)
 
+
+; Regex literals
+;---------------
+
+(regex "/" @punctuation.special)
+(regex_pattern) @string.special.regex
+(regex_flags) @operator
+
 ; Error
 ;----------
 

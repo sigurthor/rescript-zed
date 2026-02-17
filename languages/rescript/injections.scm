@@ -26,3 +26,7 @@
   (#eq? @_name "relay")
   (expression_statement
     (_ (_) @injection.content (#set! injection.language "graphql") )))
+
+; Native regex literals (/pattern/flags)
+(regex
+  (regex_pattern) @injection.content (#set! injection.language "regex"))
