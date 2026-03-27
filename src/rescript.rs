@@ -12,20 +12,80 @@ struct ReScriptExtension {
 
 #[derive(Debug, Default)]
 struct Settings {
+    initialization_options: Option<Value>,
     version: Option<String>,
 }
 
-fn parse_settings(settings_value: Value) -> Settings {
-    if let Some(obj) = settings_value.as_object() {
-        return Settings {
-            version: obj
-                .get("version")
-                .and_then(|v| v.as_str())
-                .map(|s| s.to_string()),
-        };
-    }
+fn parse_version(settings_value: &Value) -> Option<String> {
+    let settings = settings_value.as_object()?;
 
-    Settings::default()
+    settings
+        .get("zed")
+        .and_then(|value| value.as_object())
+        .and_then(|zed| {
+            zed.get("version")
+                .or_else(|| zed.get("serverVersion"))
+                .and_then(|value| value.as_str())
+        })
+        .map(|value| value.to_string())
+        .or_else(|| {
+            settings
+                .get("version")
+                .and_then(|value| value.as_str())
+                .map(|value| value.to_string())
+        })
+}
+
+fn parse_settings(lsp_settings: LspSettings) -> Settings {
+    Settings {
+        initialization_options: lsp_settings.initialization_options,
+        version: lsp_settings.settings.as_ref().and_then(parse_version),
+    }
+}
+
+fn merge_json(target: &mut Value, source: Value) {
+    match (target, source) {
+        (Value::Object(target), Value::Object(source)) => {
+            for (key, value) in source {
+                if let Some(target_value) = target.get_mut(&key) {
+                    merge_json(target_value, value);
+                } else {
+                    target.insert(key, value);
+                }
+            }
+        }
+        (target, source) => *target = source,
+    }
+}
+
+fn default_initialization_options() -> Value {
+    zed::serde_json::json!({
+        "extensionConfiguration": {
+            "askToStartBuild": true,
+            "logLevel": "info",
+            "inlayHints": {
+                "enable": false,
+                "maxLength": 25
+            },
+            "codeLens": false,
+            "binaryPath": null,
+            "platformPath": null,
+            "runtimePath": null,
+            "signatureHelp": {
+                "enabled": true,
+                "forConstructorPayloads": true
+            },
+            "incrementalTypechecking": {
+                "enable": true,
+                "acrossFiles": false
+            },
+            "cache": {
+                "projectConfig": {
+                    "enable": true
+                }
+            },
+        }
+    })
 }
 
 impl ReScriptExtension {
@@ -41,12 +101,23 @@ impl ReScriptExtension {
         let settings = zed::settings::LspSettings::for_worktree(server_id.as_ref(), worktree);
         match settings {
             Err(_) => Ok(Settings::default()),
-            Ok(LspSettings { settings: None, .. }) => Ok(Settings::default()),
-            Ok(LspSettings {
-                settings: Some(settings_value),
-                ..
-            }) => Ok(parse_settings(settings_value)),
+            Ok(lsp_settings) => Ok(parse_settings(lsp_settings)),
         }
+    }
+
+    fn initialization_options_for_worktree(
+        &mut self,
+        server_id: &zed::LanguageServerId,
+        worktree: &zed::Worktree,
+    ) -> Result<Value> {
+        let settings = self.get_lsp_settings_for_worktree(server_id, worktree)?;
+        let mut initialization_options = default_initialization_options();
+
+        if let Some(user_initialization_options) = settings.initialization_options {
+            merge_json(&mut initialization_options, user_initialization_options);
+        }
+
+        Ok(initialization_options)
     }
 
     fn server_script_path(
@@ -118,8 +189,8 @@ impl zed::Extension for ReScriptExtension {
     ) -> Result<zed::Command> {
         let server_path = self.server_script_path(server_id, worktree)?;
 
-        let current_dir = env::current_dir()
-            .map_err(|e| format!("failed to get current directory: {e}"))?;
+        let current_dir =
+            env::current_dir().map_err(|e| format!("failed to get current directory: {e}"))?;
 
         Ok(zed::Command {
             command: zed::node_binary_path()?,
@@ -136,20 +207,12 @@ impl zed::Extension for ReScriptExtension {
 
     fn language_server_initialization_options(
         &mut self,
-        _server_id: &zed::LanguageServerId,
-        _worktree: &zed::Worktree,
+        server_id: &zed::LanguageServerId,
+        worktree: &zed::Worktree,
     ) -> Result<Option<zed::serde_json::Value>> {
-        Ok(Some(zed::serde_json::json!({
-            "extensionConfiguration": {
-                "inlayHints": {
-                    "enable": true
-                },
-                "codeLens": true,
-                "signatureHelp": {
-                    "enabled": true
-                }
-            }
-        })))
+        Ok(Some(self.initialization_options_for_worktree(
+            server_id, worktree,
+        )?))
     }
 }
 

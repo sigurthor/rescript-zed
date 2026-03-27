@@ -1,0 +1,14 @@
+[
+  {
+    "token_type": "interface",
+    "style": ["tag", "type"]
+  },
+  {
+    "token_type": "modifier",
+    "style": ["punctuation.special", "keyword"]
+  },
+  {
+    "token_type": "type",
+    "style": ["type.builtin", "type"]
+  }
+]
