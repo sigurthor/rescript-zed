@@ -1,0 +1,96 @@
+{
+  "Let Binding": {
+    "prefix": "let",
+    "body": "let ${1:name} = ${0:value}",
+    "description": "Insert a let binding"
+  },
+  "Function": {
+    "prefix": "fn",
+    "body": ["let ${1:name} = (${2:arg}) => {", "  ${0}", "}"],
+    "description": "Insert a function binding"
+  },
+  "Switch": {
+    "prefix": "switch",
+    "body": ["switch ${1:value} {", "| ${2:pattern} => ${0}", "}"],
+    "description": "Insert a switch expression"
+  },
+  "Type Alias": {
+    "prefix": "type",
+    "body": "type ${1:t} = ${0:string}",
+    "description": "Insert a type alias"
+  },
+  "Variant": {
+    "prefix": "variant",
+    "body": ["type ${1:t} =", "| ${2:One}", "| ${0:Two}"],
+    "description": "Insert a variant type"
+  },
+  "Module": {
+    "prefix": "module",
+    "body": ["module ${1:Name} = {", "  ${0}", "}"],
+    "description": "Insert a module"
+  },
+  "Try": {
+    "prefix": "try",
+    "body": [
+      "try {",
+      "  ${1:expression}",
+      "} catch {",
+      "| ${2:MyException} => ${0:expression}",
+      "}"
+    ],
+    "description": "Insert a try/catch expression"
+  },
+  "For Loop": {
+    "prefix": "for",
+    "body": [
+      "for ${1:i} in ${2:startValueInclusive} to ${3:endValueInclusive} {",
+      "  ${0:Js.log(${1:i})}",
+      "}"
+    ],
+    "description": "Insert a for loop"
+  },
+  "Reverse For Loop": {
+    "prefix": "for",
+    "body": [
+      "for ${1:i} in ${2:startValueInclusive} downto ${3:endValueInclusive} {",
+      "  ${0:Js.log(${1:i})}",
+      "}"
+    ],
+    "description": "Insert a reverse for loop"
+  },
+  "External": {
+    "prefix": "external",
+    "body": "external ${1:name}: ${2:string} = ${0:\"name\"}",
+    "description": "Insert an external binding"
+  },
+  "Global External Object": {
+    "prefix": "external",
+    "body": "@val external ${1:setTimeout}: ${2:(unit => unit, int) => float} = \"${0:setTimeout}\"",
+    "description": "Insert a global external binding"
+  },
+  "Global External Module": {
+    "prefix": "external",
+    "body": "@scope(\"${1:Math}\") @val external ${2:random}: ${3:unit => float} = \"${0:random}\"",
+    "description": "Insert a scoped global external binding"
+  },
+  "JS Module External": {
+    "prefix": "external",
+    "body": "@module(\"${1:path}\") external ${2:dirname}: ${3:string => string} = \"${0:dirname}\"",
+    "description": "Insert a JavaScript module external binding"
+  },
+  "JS Module Default External": {
+    "prefix": "external",
+    "body": "@module external ${1:leftPad}: ${2:(string, int) => string} = \"${0:leftPad}\"",
+    "description": "Insert a default JavaScript module external binding"
+  },
+  "React Component": {
+    "prefix": "rcomp",
+    "body": [
+      "@react.component",
+      "let make = (~${1:label}) => {",
+      "  ${0}",
+      "}"
+    ],
+    "description": "Insert a React component"
+  }
+}

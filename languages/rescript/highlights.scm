@@ -2,13 +2,11 @@
 
 ; Identifiers
 ;------------
-
 ; Escaped identifiers like \"+."
 ((value_identifier) @constant.macro
- (#match? @constant.macro "^\\.*$"))
+  (#match? @constant.macro "^\\.*$"))
 
-
-((value_identifier) @variable)
+(value_identifier) @variable
 
 [
   (type_identifier)
@@ -17,27 +15,57 @@
   (list_pattern)
 ] @type
 
+; Dict
+(dict
+  "dict" @type.builtin)
+
+(dict_pattern
+  "dict" @type.builtin)
+
+(dict_entry
+  (string) @property)
+
+(dict_pattern_entry
+  (string) @property)
+
+(dict_pattern_entry
+  (value_identifier) @variable.parameter)
+
+(parameter
+  (dict_pattern
+    (dict_pattern_entry
+      (value_identifier) @variable.parameter)))
+
 ((type_identifier) @type.builtin
-  (#any-of? @type.builtin
-    "int" "char" "string" "float" "bool" "unit"))
+  (#any-of? @type.builtin "int" "char" "string" "float" "bool" "unit"))
 
 [
   (variant_identifier)
   (polyvar_identifier)
 ] @constructor
 
-(record_type_field (property_identifier) @property)
-(record_field (property_identifier) @property)
-(object (field (property_identifier) @property))
-(object_type (field (property_identifier) @property))
+(record_type_field
+  (property_identifier) @property)
+
+(record_field
+  (property_identifier) @property)
+
+(object
+  (field
+    (property_identifier) @property))
+
+(object_type
+  (field
+    (property_identifier) @property))
+
 (module_identifier) @module
 
-(member_expression (property_identifier) @variable.member)
+(member_expression
+  (property_identifier) @variable.member)
 
 (value_identifier_path
   (module_identifier)
   (value_identifier) @variable)
-
 
 (record_pattern
   (value_identifier_path
@@ -47,55 +75,67 @@
   (value_identifier) @variable)
 
 (labeled_argument
-   label: (value_identifier) @variable.parameter)
-
+  label: (value_identifier) @variable.parameter)
 
 ; Parameters
 ;----------------
+(list_pattern
+  (value_identifier) @variable.parameter)
 
-(list_pattern (value_identifier) @variable.parameter)
-(spread_pattern (value_identifier) @variable.parameter)
+(spread_pattern
+  (value_identifier) @variable.parameter)
 
 ; String literals
 ;----------------
-
 [
   (string)
   (template_string)
 ] @string
 
-
 (character) @character
+
 (escape_sequence) @string.escape
 
 ; Other literals
 ;---------------
-
 [
   (true)
   (false)
 ] @boolean
 
 (number) @number
+
 (polyvar) @constructor
+
 (polyvar_string) @constructor
 
 ; Functions
 ;----------
-
 ; parameter(s) in parens
+(parameter
+  (value_identifier) @variable.parameter)
 
-(parameter (value_identifier) @variable.parameter)
-(labeled_parameter (value_identifier) @variable.parameter)
+(labeled_parameter
+  (value_identifier) @variable.parameter)
 
 ; single parameter with no parens
-(function parameter: (value_identifier) @variable.parameter)
+(function
+  parameter: (value_identifier) @variable.parameter)
 
 ; first-level descructuring (required for nvim-tree-sitter as it only matches direct
 ; children and the above patterns do not match destructuring patterns in NeoVim)
-(parameter (tuple_pattern (tuple_item_pattern (value_identifier) @variable.parameter)))
-(parameter (array_pattern (value_identifier) @variable.parameter))
-(parameter (record_pattern (value_identifier) @variable.parameter))
+(parameter
+  (tuple_pattern
+    (tuple_item_pattern
+      (value_identifier) @variable.parameter)))
+
+(parameter
+  (array_pattern
+    (value_identifier) @variable.parameter))
+
+(parameter
+  (record_pattern
+    (value_identifier) @variable.parameter))
 
 ; function identifier in let binding
 (let_binding
@@ -103,7 +143,6 @@
   body: (function))
 
 ; function calls
-
 (call_expression
   function: (value_identifier_path
     _
@@ -115,40 +154,38 @@
 ; highlight the right-hand side of a pipe operator as a function call
 (pipe_expression
   _
-  [(value_identifier_path
-    _
-    (value_identifier) @function.call)
-    (value_identifier) @function.call])
-
+  [
+    (value_identifier_path
+      _
+      (value_identifier) @function.call)
+    (value_identifier) @function.call
+  ])
 
 ; Meta
 ;-----
-
 (decorator_identifier) @attribute
 
 (extension_identifier) @keyword
-("%") @keyword
+
+"%" @keyword
 
 ; Misc
 ;-----
-
-(polyvar_type_pattern "#" @constructor)
+(polyvar_type_pattern
+  "#" @constructor)
 
 [
   "include"
   "open"
 ] @keyword.import
 
-
 [
-   "private"
-   "mutable"
-   "rec"
+  "private"
+  "mutable"
+  "rec"
 ] @keyword.modifier
 
-[
-  "type"
-] @keyword.type
+"type" @keyword.type
 
 [
   "and"
@@ -161,17 +198,20 @@
   "external"
   "let"
   "module"
+  "of"
   "assert"
   "await"
   "lazy"
   "constraint"
 ] @keyword
 
-(("await") @keyword.coroutine)
+"await" @keyword.coroutine
 
-((function "async" @keyword.coroutine))
+(function
+  "async" @keyword.coroutine)
 
-(module_unpack "unpack" @keyword)
+(module_unpack
+  "unpack" @keyword)
 
 [
   "if"
@@ -188,7 +228,7 @@
 
 (call_expression
   function: (value_identifier) @keyword.exception
-   (#eq? @keyword.exception "raise"))
+  (#eq? @keyword.exception "raise"))
 
 [
   "for"
@@ -236,7 +276,12 @@
 
 ; Explicitly enclose these operators with binary_expression
 ; to avoid confusion with JSX tag delimiters
-(binary_expression ["<" ">" "/"] @operator)
+(binary_expression
+  [
+    "<"
+    ">"
+    "/"
+  ] @operator)
 
 [
   "("
@@ -249,18 +294,22 @@
   ">"
 ] @punctuation.bracket
 
-(unit ["(" ")"] @constant.builtin)
+(unit
+  [
+    "("
+    ")"
+  ] @constant.builtin)
 
 (template_substitution
   "${" @punctuation.special
-   "}" @punctuation.special) @none
+  "}" @punctuation.special) @none
 
 (polyvar_type
   [
-   "["
-   "[>"
-   "[<"
-   "]"
+    "["
+    "[>"
+    "[<"
+    "]"
   ] @punctuation.bracket)
 
 [
@@ -270,28 +319,57 @@
   "..."
 ] @punctuation.special
 
-(ternary_expression ["?" ":"] @keyword.conditional.ternary)
+(ternary_expression
+  [
+    "?"
+    ":"
+  ] @keyword.conditional.ternary)
 
 ; JSX
 ;----------
 (jsx_identifier) @tag
+
 (jsx_element
-  open_tag: (jsx_opening_element ["<" ">"] @tag.delimiter))
+  open_tag: (jsx_opening_element
+    [
+      "<"
+      ">"
+    ] @tag.delimiter))
+
 (jsx_element
-  close_tag: (jsx_closing_element ["<" "/" ">"] @tag.delimiter))
-(jsx_self_closing_element ["/" ">" "<"] @tag.delimiter)
-(jsx_fragment [">" "<" "/"] @tag.delimiter)
-(jsx_attribute (property_identifier) @tag.attribute)
+  close_tag: (jsx_closing_element
+    [
+      "<"
+      "/"
+      ">"
+    ] @tag.delimiter))
 
+(jsx_self_closing_element
+  [
+    "/"
+    ">"
+    "<"
+  ] @tag.delimiter)
 
-; Regex literals
-;---------------
+(jsx_fragment
+  [
+    ">"
+    "<"
+    "/"
+  ] @tag.delimiter)
 
-(regex "/" @punctuation.special)
-(regex_pattern) @string.special.regex
-(regex_flags) @operator
+(jsx_attribute
+  (property_identifier) @tag.attribute)
 
 ; Error
 ;----------
-
 (ERROR) @error
+
+; Regex literals
+;---------------
+(regex
+  "/" @punctuation.special)
+
+(regex_pattern) @string.special.regex
+
+(regex_flags) @operator
